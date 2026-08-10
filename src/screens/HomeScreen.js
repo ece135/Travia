@@ -1,18 +1,16 @@
+
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
 
-export default function HomeScreen() {
-  const router = useRouter();
-
+export default function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
-      <Pressable style={styles.button} onPress={() => router.push('/create-trip')}>
+      <Pressable style={styles.button} onPress={() => navigation.navigate('CreateTrip')}>
         <Text style={styles.buttonText}>Create Trip</Text>
       </Pressable>
-      <Pressable style={styles.button} onPress={() => router.push('/trip-route')}>
+      <Pressable style={styles.button} onPress={() => navigation.navigate('TripRoute')}>
         <Text style={styles.buttonText}>Trip Route</Text>
       </Pressable>
-      <Pressable style={styles.button} onPress={() => router.push('/budget')}>
+      <Pressable style={styles.button} onPress={() => navigation.navigate('Budget')}>
         <Text style={styles.buttonText}>Budget</Text>
       </Pressable>
     </View>
