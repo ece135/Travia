@@ -6,6 +6,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 export default function CreateTripScreen() {
   const router = useRouter();
   const createTrip = useTripStore((state) => state.createTrip);
+  const trip = useTripStore((state) => state.trip);
 
   const [destination, setDestination] = useState("");
   const [startDate, setStartDate] = useState("");
@@ -41,7 +42,13 @@ export default function CreateTripScreen() {
         onChangeText={setEndDate}
         placeholder="e.g. 2026-08-15"
       />
-
+      <Text style={styles.label}>Places to Visit</Text>
+      {trip?.places.map((p) => (
+        <Text key={p.id} style={styles.placeItem}>• {p.name} ({p.category})</Text>
+      ))}
+      <Pressable style={styles.addPlaceButton} onPress={() => router.push('/add-place')}>
+        <Text style={styles.addPlaceText}>+ Add Place</Text>
+      </Pressable>
       <Pressable style={styles.button} onPress={handleCreate}>
         <Text style={styles.buttonText}>Create Trip</Text>
       </Pressable>
@@ -73,4 +80,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   },
+  placeItem: { fontSize: 15, color: '#000', marginTop: 6 },
+  addPlaceButton: { borderWidth: 1, borderColor: '#2563eb', borderRadius: 12, padding: 12, marginTop: 12 },
+  addPlaceText: { color: '#2563eb', textAlign: 'center', fontWeight: '600' },
 });
