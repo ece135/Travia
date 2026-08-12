@@ -57,7 +57,7 @@ export default function TripRouteScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12 },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
   emptyText: { fontSize: 16, color: "#666" },
   dayCard: {

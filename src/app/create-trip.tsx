@@ -50,7 +50,7 @@ export default function CreateTripScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, gap: 8 },
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
   label: { fontSize: 14, fontWeight: "600", marginTop: 12 },
   input: {
     borderWidth: 1,
