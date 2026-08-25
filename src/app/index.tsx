@@ -1,8 +1,15 @@
+import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTripStore } from '@/store/tripStore';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const loadTrip = useTripStore((state) => state.loadTrip);
+
+  useEffect(() => {
+    loadTrip();
+  }, []);
 
   return (
     <View style={styles.container}>

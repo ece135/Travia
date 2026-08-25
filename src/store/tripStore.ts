@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
 
 type Place = {
   id: string;
@@ -29,33 +31,71 @@ type Trip = {
   expenses: Expense[];
 };
 
+const TRIP_DOC_ID = 'current-trip'; // tek trip için sabit id, ileride hesap sistemiyle değişecek
+
 type TripStore = {
   trip: Trip | null;
-  createTrip: (destination: string, startDate: string, endDate: string) => void;
-  addPlace: (place: Place) => void;
-  addDayPlan: (plan: DayPlan) => void;
-  setTotalBudget: (amount: number) => void;
-  addExpense: (expense: Expense) => void;
+  loading: boolean;
+  loadTrip: () => Promise<void>;
+  createTrip: (destination: string, startDate: string, endDate: string) => Promise<void>;
+  addPlace: (place: Place) => Promise<void>;
+  addDayPlan: (plan: DayPlan) => Promise<void>;
+  setTotalBudget: (amount: number) => Promise<void>;
+  addExpense: (expense: Expense) => Promise<void>;
 };
 
-export const useTripStore = create<TripStore>((set) => ({
+async function saveTrip(trip: Trip) {
+  await setDoc(doc(db, 'trips', TRIP_DOC_ID), trip);
+}
+
+export const useTripStore = create<TripStore>((set, get) => ({
   trip: null,
-  createTrip: (destination, startDate, endDate) =>
-    set({ trip: { destination, startDate, endDate, places: [], dayPlans: [], totalBudget: 0, expenses: [] } }),
-  addPlace: (place) =>
-    set((state) => ({
-      trip: state.trip ? { ...state.trip, places: [...state.trip.places, place] } : state.trip,
-    })),
-  addDayPlan: (plan) =>
-    set((state) => ({
-      trip: state.trip ? { ...state.trip, dayPlans: [...state.trip.dayPlans, plan] } : state.trip,
-    })),
-  setTotalBudget: (amount) =>
-  set((state) => ({
-    trip: state.trip ? { ...state.trip, totalBudget: amount } : state.trip,
-    })),
-  addExpense: (expense) =>
-    set((state) => ({
-      trip: state.trip ? { ...state.trip, expenses: [...state.trip.expenses, expense] } : state.trip,
-    })),
+  loading: false,
+
+  loadTrip: async () => {
+    set({ loading: true });
+    const snap = await getDoc(doc(db, 'trips', TRIP_DOC_ID));
+    if (snap.exists()) {
+      set({ trip: snap.data() as Trip });
+    }
+    set({ loading: false });
+  },
+
+  createTrip: async (destination, startDate, endDate) => {
+    const newTrip: Trip = { destination, startDate, endDate, places: [], dayPlans: [], totalBudget: 0, expenses: [] };
+    set({ trip: newTrip });
+    await saveTrip(newTrip);
+  },
+
+  addPlace: async (place) => {
+    const trip = get().trip;
+    if (!trip) return;
+    const updated = { ...trip, places: [...trip.places, place] };
+    set({ trip: updated });
+    await saveTrip(updated);
+  },
+
+  addDayPlan: async (plan) => {
+    const trip = get().trip;
+    if (!trip) return;
+    const updated = { ...trip, dayPlans: [...trip.dayPlans, plan] };
+    set({ trip: updated });
+    await saveTrip(updated);
+  },
+
+  setTotalBudget: async (amount) => {
+    const trip = get().trip;
+    if (!trip) return;
+    const updated = { ...trip, totalBudget: amount };
+    set({ trip: updated });
+    await saveTrip(updated);
+  },
+
+  addExpense: async (expense) => {
+    const trip = get().trip;
+    if (!trip) return;
+    const updated = { ...trip, expenses: [...trip.expenses, expense] };
+    set({ trip: updated });
+    await saveTrip(updated);
+  },
 }));
