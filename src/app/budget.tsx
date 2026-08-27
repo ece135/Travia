@@ -1,22 +1,16 @@
-import { useTripStore } from "@/store/tripStore";
-import { useState } from "react";
-import {
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { useState } from 'react';
+import { View, Text, TextInput, Pressable, FlatList, StyleSheet } from 'react-native';
+import { useTripStore } from '@/store/tripStore';
+import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
 export default function BudgetScreen() {
   const trip = useTripStore((state) => state.trip);
   const setTotalBudget = useTripStore((state) => state.setTotalBudget);
   const addExpense = useTripStore((state) => state.addExpense);
 
-  const [budgetInput, setBudgetInput] = useState("");
-  const [expenseNote, setExpenseNote] = useState("");
-  const [expenseAmount, setExpenseAmount] = useState("");
+  const [budgetInput, setBudgetInput] = useState('');
+  const [expenseNote, setExpenseNote] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
 
   if (!trip) {
     return (
@@ -31,47 +25,41 @@ export default function BudgetScreen() {
 
   const handleAddExpense = () => {
     if (!expenseNote || !expenseAmount) return;
-    addExpense({
-      id: Date.now().toString(),
-      category: "other",
-      amount: parseFloat(expenseAmount),
-      note: expenseNote,
-    });
-    setExpenseNote("");
-    setExpenseAmount("");
+    addExpense({ id: Date.now().toString(), category: 'other', amount: parseFloat(expenseAmount), note: expenseNote });
+    setExpenseNote('');
+    setExpenseAmount('');
   };
 
   return (
     <View style={styles.container}>
+      <Text style={styles.eyebrow}>{trip.destination}</Text>
+      <Text style={styles.title}>Budget</Text>
+
+      <View style={styles.summaryCard}>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Spent</Text>
+          <Text style={styles.summaryValue}>{spent} / {trip.totalBudget}</Text>
+        </View>
+        <View style={styles.summaryRow}>
+          <Text style={styles.summaryLabel}>Remaining</Text>
+          <Text style={[styles.summaryValue, { color: remaining < 0 ? '#C0392B' : Colors.teal }]}>{remaining}</Text>
+        </View>
+      </View>
+
       <Text style={styles.label}>Total Budget</Text>
       <TextInput
         style={styles.input}
         value={budgetInput}
         onChangeText={setBudgetInput}
         placeholder="e.g. 1000"
+        placeholderTextColor={Colors.gray}
         keyboardType="numeric"
         onEndEditing={() => setTotalBudget(parseFloat(budgetInput) || 0)}
       />
 
-      <Text style={styles.summary}>
-        Spent: {spent} / {trip.totalBudget}
-      </Text>
-      <Text style={styles.summary}>Remaining: {remaining}</Text>
-
       <Text style={styles.label}>Add Expense</Text>
-      <TextInput
-        style={styles.input}
-        value={expenseNote}
-        onChangeText={setExpenseNote}
-        placeholder="e.g. Dinner"
-      />
-      <TextInput
-        style={styles.input}
-        value={expenseAmount}
-        onChangeText={setExpenseAmount}
-        placeholder="Amount"
-        keyboardType="numeric"
-      />
+      <TextInput style={styles.input} value={expenseNote} onChangeText={setExpenseNote} placeholder="e.g. Dinner" placeholderTextColor={Colors.gray} />
+      <TextInput style={[styles.input, { marginTop: Spacing.xs }]} value={expenseAmount} onChangeText={setExpenseAmount} placeholder="Amount" placeholderTextColor={Colors.gray} keyboardType="numeric" />
       <Pressable style={styles.button} onPress={handleAddExpense}>
         <Text style={styles.buttonText}>Add Expense</Text>
       </Pressable>
@@ -79,11 +67,12 @@ export default function BudgetScreen() {
       <FlatList
         data={trip.expenses}
         keyExtractor={(item) => item.id}
-        style={{ marginTop: 16 }}
+        style={{ marginTop: Spacing.lg }}
         renderItem={({ item }) => (
-          <Text style={styles.expenseItem}>
-            {item.note} — {item.amount}
-          </Text>
+          <View style={styles.expenseRow}>
+            <Text style={styles.expenseNote}>{item.note}</Text>
+            <Text style={styles.expenseAmount}>{item.amount}</Text>
+          </View>
         )}
       />
     </View>
@@ -91,32 +80,20 @@ export default function BudgetScreen() {
 }
 
 const styles = StyleSheet.create({
-  container:{ flex: 1, padding: 20, backgroundColor: '#fff' },
-  centered: { flex: 1, justifyContent: "center", alignItems: "center" },
-  emptyText: { fontSize: 16, color: "#666" },
-  label: { fontSize: 14, fontWeight: "600", marginTop: 16, color: "#000" },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: "#000",
-    backgroundColor: "#fff",
-    marginTop: 4,
-  },
-  summary: { fontSize: 16, fontWeight: "600", marginTop: 8, color: "#000" },
-  button: {
-    backgroundColor: "#2563eb",
-    padding: 14,
-    borderRadius: 12,
-    marginTop: 12,
-  },
-  buttonText: {
-    color: "white",
-    textAlign: "center",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  expenseItem: { fontSize: 15, color: "#000", paddingVertical: 4 },
+  container: { flex: 1, padding: Spacing.lg, backgroundColor: Colors.sand },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.paper },
+  emptyText: { fontFamily: Fonts.body, fontSize: 16, color: Colors.gray },
+  eyebrow: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.teal, letterSpacing: 1, textTransform: 'uppercase' },
+  title: { fontFamily: Fonts.displayBold, fontSize: 28, color: Colors.navy, marginTop: Spacing.xs, marginBottom: Spacing.md },
+  summaryCard: { backgroundColor: Colors.teal, borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.lg, padding: Spacing.md, marginBottom: Spacing.md },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: Spacing.xs },
+  summaryLabel: { fontFamily: Fonts.bodySemiBold, color: Colors.navy , fontSize: 16},
+  summaryValue: { fontFamily: Fonts.bodySemiBold, color: Colors.navy, fontSize: 16 },
+  label: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.navy, marginTop: Spacing.md, marginBottom: Spacing.xs },
+  input: { borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.md, padding: Spacing.md, fontFamily: Fonts.body, fontSize: 16, color: Colors.navy, backgroundColor: Colors.white },
+  button: { backgroundColor: Colors.saffron, padding: Spacing.md, borderRadius: Radius.md, marginTop: Spacing.md },
+  buttonText: { fontFamily: Fonts.bodySemiBold, color: Colors.navy, textAlign: 'center', fontSize: 16 },
+  expenseRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: Spacing.sm, borderBottomWidth: 1, borderBottomColor: Colors.sand },
+  expenseNote: { fontFamily: Fonts.body, color: Colors.navy },
+  expenseAmount: { fontFamily: Fonts.bodySemiBold, color: Colors.navy },
 });

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, FlatList, TextInput, Pressable, StyleSheet } from 'react-native';
 import { useTripStore } from '@/store/tripStore';
+import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
 function getDateRange(start: string, end: string) {
   const dates: string[] = [];
@@ -16,7 +17,6 @@ function getDateRange(start: string, end: string) {
 export default function TripRouteScreen() {
   const trip = useTripStore((state) => state.trip);
   const addDayPlan = useTripStore((state) => state.addDayPlan);
-
   const [inputs, setInputs] = useState<Record<string, string>>({});
 
   if (!trip) {
@@ -41,29 +41,40 @@ export default function TripRouteScreen() {
       data={days}
       keyExtractor={(item) => item}
       contentContainerStyle={styles.container}
-      renderItem={({ item }) => {
+      ListHeaderComponent={
+        <View>
+          <Text style={styles.eyebrow}>{trip.destination}</Text>
+          <Text style={styles.title}>Trip Route</Text>
+        </View>
+      }
+      renderItem={({ item, index }) => {
         const dayName = new Date(item).toLocaleDateString('en-US', { weekday: 'long' });
         const plansForDay = trip.dayPlans.filter((p) => p.date === item);
         return (
-          <View style={styles.dayCard}>
-            <Text style={styles.dayTitle}>{dayName}, {item}</Text>
+          <View>
+            {index > 0 && <View style={styles.dottedLine} />}
+            <View style={styles.dayCard}>
+              <Text style={styles.dayTitle}>{dayName}</Text>
+              <Text style={styles.dayDate}>{item}</Text>
 
-            {plansForDay.length === 0 ? (
-              <Text style={styles.noPlan}>No plans yet</Text>
-            ) : (
-              plansForDay.map((p) => <Text key={p.id} style={styles.planText}>• {p.note}</Text>)
-            )}
+              {plansForDay.length === 0 ? (
+                <Text style={styles.noPlan}>No plans yet</Text>
+              ) : (
+                plansForDay.map((p) => <Text key={p.id} style={styles.planText}>• {p.note}</Text>)
+              )}
 
-            <View style={styles.addRow}>
-              <TextInput
-                style={styles.input}
-                value={inputs[item] || ''}
-                onChangeText={(text) => setInputs((prev) => ({ ...prev, [item]: text }))}
-                placeholder="Add a plan..."
-              />
-              <Pressable style={styles.addButton} onPress={() => handleAdd(item)}>
-                <Text style={styles.addButtonText}>+</Text>
-              </Pressable>
+              <View style={styles.addRow}>
+                <TextInput
+                  style={styles.input}
+                  value={inputs[item] || ''}
+                  onChangeText={(text) => setInputs((prev) => ({ ...prev, [item]: text }))}
+                  placeholder="Add a plan..."
+                  placeholderTextColor={Colors.gray}
+                />
+                <Pressable style={styles.addButton} onPress={() => handleAdd(item)}>
+                  <Text style={styles.addButtonText}>+</Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         );
@@ -73,15 +84,19 @@ export default function TripRouteScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16, gap: 12, backgroundColor: '#fff' },
-  centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyText: { fontSize: 16, color: '#666' },
-  dayCard: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 16 },
-  dayTitle: { fontSize: 16, fontWeight: '700', color: '#000', marginBottom: 8 },
-  noPlan: { color: '#999' },
-  planText: { color: '#000', marginTop: 4 },
-  addRow: { flexDirection: 'row', gap: 8, marginTop: 12 },
-  input: { flex: 1, borderWidth: 1, borderColor: '#ccc', borderRadius: 8, padding: 10, color: '#000', backgroundColor: '#fff' },
-  addButton: { backgroundColor: '#2563eb', borderRadius: 8, width: 44, justifyContent: 'center', alignItems: 'center' },
-  addButtonText: { color: '#fff', fontSize: 20, fontWeight: '700' },
+  container: { padding: Spacing.lg, backgroundColor: Colors.paper },
+  centered: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.paper },
+  emptyText: { fontFamily: Fonts.body, fontSize: 16, color: Colors.gray },
+  eyebrow: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.teal, letterSpacing: 1, textTransform: 'uppercase' },
+  title: { fontFamily: Fonts.displayBold, fontSize: 28, color: Colors.navy, marginTop: Spacing.xs, marginBottom: Spacing.lg },
+  dottedLine: { height: 20, marginLeft: Spacing.lg, borderLeftWidth: 2, borderLeftColor: Colors.sand, borderStyle: 'dashed' },
+  dayCard: { backgroundColor: Colors.sand, borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.lg, padding: Spacing.md },
+  dayTitle: { fontFamily: Fonts.displayBold, fontSize: 18, color: Colors.navy },
+  dayDate: { fontFamily: Fonts.body, fontSize: 13, color: Colors.gray, marginBottom: Spacing.sm },
+  noPlan: { fontFamily: Fonts.body, color: Colors.gray, fontStyle: 'italic' },
+  planText: { fontFamily: Fonts.body, color: Colors.navy, marginTop: Spacing.xs },
+  addRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
+  input: { flex: 1, borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.sm, padding: 10, fontFamily: Fonts.body, color: Colors.navy, backgroundColor: Colors.paper },
+  addButton: { backgroundColor: Colors.saffron, borderRadius: Radius.sm, width: 44, justifyContent: 'center', alignItems: 'center' },
+  addButtonText: { color: Colors.navy, fontSize: 20, fontFamily: Fonts.bodySemiBold },
 });
