@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 
 type Place = {
@@ -22,6 +22,7 @@ type Expense = {
 };
 
 type Trip = {
+  id: string;
   destination: string;
   startDate: string;
   endDate: string;
@@ -31,71 +32,99 @@ type Trip = {
   expenses: Expense[];
 };
 
-const TRIP_DOC_ID = 'current-trip'; // tek trip için sabit id, ileride hesap sistemiyle değişecek
-
 type TripStore = {
-  trip: Trip | null;
+  trips: Trip[];
+  activeTripId: string | null;
   loading: boolean;
-  loadTrip: () => Promise<void>;
+
+  loadTrips: () => Promise<void>;
   createTrip: (destination: string, startDate: string, endDate: string) => Promise<void>;
+  setActiveTrip: (id: string) => void;
+  getActiveTrip: () => Trip | null;
+
   addPlace: (place: Place) => Promise<void>;
   addDayPlan: (plan: DayPlan) => Promise<void>;
+  deleteDayPlan: (id: string) => Promise<void>;
   setTotalBudget: (amount: number) => Promise<void>;
   addExpense: (expense: Expense) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
 };
 
 async function saveTrip(trip: Trip) {
-  await setDoc(doc(db, 'trips', TRIP_DOC_ID), trip);
+  await setDoc(doc(db, 'trips', trip.id), trip);
 }
 
 export const useTripStore = create<TripStore>((set, get) => ({
-  trip: null,
+  trips: [],
+  activeTripId: null,
   loading: false,
 
-  loadTrip: async () => {
+  loadTrips: async () => {
     set({ loading: true });
-    const snap = await getDoc(doc(db, 'trips', TRIP_DOC_ID));
-    if (snap.exists()) {
-      set({ trip: snap.data() as Trip });
-    }
-    set({ loading: false });
+    const snap = await getDocs(collection(db, 'trips'));
+    const trips: Trip[] = snap.docs.map((d) => d.data() as Trip);
+    set({ trips, loading: false });
   },
 
   createTrip: async (destination, startDate, endDate) => {
-    const newTrip: Trip = { destination, startDate, endDate, places: [], dayPlans: [], totalBudget: 0, expenses: [] };
-    set({ trip: newTrip });
+    const id = Date.now().toString();
+    const newTrip: Trip = { id, destination, startDate, endDate, places: [], dayPlans: [], totalBudget: 0, expenses: [] };
+    set((state) => ({ trips: [...state.trips, newTrip], activeTripId: id }));
     await saveTrip(newTrip);
   },
 
+  setActiveTrip: (id) => set({ activeTripId: id }),
+
+  getActiveTrip: () => {
+    const state = get();
+    return state.trips.find((t) => t.id === state.activeTripId) || null;
+  },
+
   addPlace: async (place) => {
-    const trip = get().trip;
+    const trip = get().getActiveTrip();
     if (!trip) return;
     const updated = { ...trip, places: [...trip.places, place] };
-    set({ trip: updated });
+    set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
     await saveTrip(updated);
   },
 
   addDayPlan: async (plan) => {
-    const trip = get().trip;
+    const trip = get().getActiveTrip();
     if (!trip) return;
     const updated = { ...trip, dayPlans: [...trip.dayPlans, plan] };
-    set({ trip: updated });
+    set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
+    await saveTrip(updated);
+  },
+
+  deleteDayPlan: async (id) => {
+    const trip = get().getActiveTrip();
+    if (!trip) return;
+    const updated = { ...trip, dayPlans: trip.dayPlans.filter((p) => p.id !== id) };
+    set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
     await saveTrip(updated);
   },
 
   setTotalBudget: async (amount) => {
-    const trip = get().trip;
+    const trip = get().getActiveTrip();
     if (!trip) return;
     const updated = { ...trip, totalBudget: amount };
-    set({ trip: updated });
+    set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
     await saveTrip(updated);
   },
 
   addExpense: async (expense) => {
-    const trip = get().trip;
+    const trip = get().getActiveTrip();
     if (!trip) return;
     const updated = { ...trip, expenses: [...trip.expenses, expense] };
-    set({ trip: updated });
+    set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
+    await saveTrip(updated);
+  },
+
+  deleteExpense: async (id) => {
+    const trip = get().getActiveTrip();
+    if (!trip) return;
+    const updated = { ...trip, expenses: trip.expenses.filter((e) => e.id !== id) };
+    set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
     await saveTrip(updated);
   },
 }));

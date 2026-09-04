@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, FlatList, TextInput, Pressable, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useTripStore } from '@/store/tripStore';
 import { Colors, Fonts, Spacing, Radius } from '@/constants/theme';
 
@@ -15,14 +16,16 @@ function getDateRange(start: string, end: string) {
 }
 
 export default function TripRouteScreen() {
-  const trip = useTripStore((state) => state.trip);
+  const router = useRouter();
+  const trip = useTripStore((state) => state.getActiveTrip());
   const addDayPlan = useTripStore((state) => state.addDayPlan);
+  const deleteDayPlan = useTripStore((state) => state.deleteDayPlan);
   const [inputs, setInputs] = useState<Record<string, string>>({});
 
   if (!trip) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyText}>No trip yet. Create one first.</Text>
+        <Text style={styles.emptyText}>No trip selected. Go back and pick or create one.</Text>
       </View>
     );
   }
@@ -45,6 +48,18 @@ export default function TripRouteScreen() {
         <View>
           <Text style={styles.eyebrow}>{trip.destination}</Text>
           <Text style={styles.title}>Trip Route</Text>
+
+          <Text style={styles.sectionLabel}>Places to Visit</Text>
+          {trip.places.length === 0 ? (
+            <Text style={styles.noPlan}>No places added yet</Text>
+          ) : (
+            trip.places.map((p) => <Text key={p.id} style={styles.planText}>• {p.name} ({p.category})</Text>)
+          )}
+          <Pressable style={styles.outlineButton} onPress={() => router.push('/add-place')}>
+            <Text style={styles.outlineButtonText}>+ Add Place</Text>
+          </Pressable>
+
+          <Text style={[styles.sectionLabel, { marginTop: Spacing.lg }]}>Daily Plan</Text>
         </View>
       }
       renderItem={({ item, index }) => {
@@ -56,21 +71,20 @@ export default function TripRouteScreen() {
             <View style={styles.dayCard}>
               <Text style={styles.dayTitle}>{dayName}</Text>
               <Text style={styles.dayDate}>{item}</Text>
-
               {plansForDay.length === 0 ? (
                 <Text style={styles.noPlan}>No plans yet</Text>
               ) : (
-                plansForDay.map((p) => <Text key={p.id} style={styles.planText}>• {p.note}</Text>)
+                plansForDay.map((p) => (
+                  <View key={p.id} style={styles.planRow}>
+                    <Text style={styles.planText}>• {p.note}</Text>
+                    <Pressable onPress={() => deleteDayPlan(p.id)}>
+                      <Text style={styles.deleteText}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))
               )}
-
               <View style={styles.addRow}>
-                <TextInput
-                  style={styles.input}
-                  value={inputs[item] || ''}
-                  onChangeText={(text) => setInputs((prev) => ({ ...prev, [item]: text }))}
-                  placeholder="Add a plan..."
-                  placeholderTextColor={Colors.gray}
-                />
+                <TextInput style={styles.input} value={inputs[item] || ''} onChangeText={(text) => setInputs((prev) => ({ ...prev, [item]: text }))} placeholder="Add a plan..." placeholderTextColor={Colors.gray} />
                 <Pressable style={styles.addButton} onPress={() => handleAdd(item)}>
                   <Text style={styles.addButtonText}>+</Text>
                 </Pressable>
@@ -89,12 +103,17 @@ const styles = StyleSheet.create({
   emptyText: { fontFamily: Fonts.body, fontSize: 16, color: Colors.gray },
   eyebrow: { fontFamily: Fonts.bodyMedium, fontSize: 13, color: Colors.teal, letterSpacing: 1, textTransform: 'uppercase' },
   title: { fontFamily: Fonts.displayBold, fontSize: 28, color: Colors.navy, marginTop: Spacing.xs, marginBottom: Spacing.lg },
+  sectionLabel: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.navy, marginBottom: Spacing.xs },
+  outlineButton: { borderWidth: 1, borderColor: Colors.teal, borderRadius: Radius.md, padding: Spacing.md, marginTop: Spacing.sm, marginBottom: Spacing.md },
+  outlineButtonText: { fontFamily: Fonts.bodySemiBold, color: Colors.teal, textAlign: 'center' },
   dottedLine: { height: 20, marginLeft: Spacing.lg, borderLeftWidth: 2, borderLeftColor: Colors.sand, borderStyle: 'dashed' },
-  dayCard: { backgroundColor: Colors.sand, borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.lg, padding: Spacing.md },
+  dayCard: { backgroundColor: Colors.white, borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.lg, padding: Spacing.md },
   dayTitle: { fontFamily: Fonts.displayBold, fontSize: 18, color: Colors.navy },
   dayDate: { fontFamily: Fonts.body, fontSize: 13, color: Colors.gray, marginBottom: Spacing.sm },
-  noPlan: { fontFamily: Fonts.body, color: Colors.gray, fontStyle: 'italic' },
+  noPlan: { fontFamily: Fonts.body, color: Colors.gray, fontStyle: 'italic', marginBottom: Spacing.sm },
+  planRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: Spacing.xs },
   planText: { fontFamily: Fonts.body, color: Colors.navy, marginTop: Spacing.xs },
+  deleteText: { color: '#C0392B', fontSize: 16, fontFamily: Fonts.bodySemiBold },
   addRow: { flexDirection: 'row', gap: Spacing.sm, marginTop: Spacing.md },
   input: { flex: 1, borderWidth: 1, borderColor: Colors.sand, borderRadius: Radius.sm, padding: 10, fontFamily: Fonts.body, color: Colors.navy, backgroundColor: Colors.paper },
   addButton: { backgroundColor: Colors.saffron, borderRadius: Radius.sm, width: 44, justifyContent: 'center', alignItems: 'center' },
