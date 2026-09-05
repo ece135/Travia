@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { doc, setDoc, getDocs, collection } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, deleteDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+
 
 type Place = {
   id: string;
@@ -48,6 +49,7 @@ type TripStore = {
   setTotalBudget: (amount: number) => Promise<void>;
   addExpense: (expense: Expense) => Promise<void>;
   deleteExpense: (id: string) => Promise<void>;
+  deleteTrip: (id: string) => Promise<void>;
 };
 
 async function saveTrip(trip: Trip) {
@@ -62,7 +64,7 @@ export const useTripStore = create<TripStore>((set, get) => ({
   loadTrips: async () => {
     set({ loading: true });
     const snap = await getDocs(collection(db, 'trips'));
-    const trips: Trip[] = snap.docs.map((d) => d.data() as Trip);
+    const trips: Trip[] = snap.docs.map((d) => ({ ...(d.data() as Trip), id: d.id }));
     set({ trips, loading: false });
   },
 
@@ -126,5 +128,13 @@ export const useTripStore = create<TripStore>((set, get) => ({
     const updated = { ...trip, expenses: trip.expenses.filter((e) => e.id !== id) };
     set((state) => ({ trips: state.trips.map((t) => (t.id === trip.id ? updated : t)) }));
     await saveTrip(updated);
+  },
+
+  deleteTrip: async (id) => {
+    await deleteDoc(doc(db, 'trips', id));
+    set((state) => ({ 
+      trips: state.trips.filter((t) => t.id !== id),
+      activeTripId: state.activeTripId === id ? null : state.activeTripId,
+    }));
   },
 }));

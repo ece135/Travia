@@ -1,6 +1,6 @@
 import { Colors, Fonts, Radius, Spacing } from "@/constants/theme";
 import { useTripStore } from "@/store/tripStore";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FlatList,
   Keyboard,
@@ -29,6 +29,12 @@ export default function BudgetScreen() {
       </View>
     );
   }
+
+  useEffect(() => {
+  if (trip) {
+    setBudgetInput(trip.totalBudget === 0 ? "" : trip.totalBudget.toString());
+  }
+}, [trip?.id]);
 
   const spent = trip.expenses.reduce((sum, e) => sum + e.amount, 0);
   const remaining = trip.totalBudget - spent;
@@ -64,7 +70,7 @@ export default function BudgetScreen() {
             <Text
               style={[
                 styles.summaryValue,
-                { color: remaining < 0 ? "#C0392B" : Colors.teal },
+                { color: remaining < 0 ? "#C0392B" : Colors.white },
               ]}
             >
               {remaining}
@@ -76,15 +82,18 @@ export default function BudgetScreen() {
         <TextInput
           style={styles.input}
           value={budgetInput}
-          onChangeText={setBudgetInput}
+          onChangeText={(text) => {
+            setBudgetInput(text);
+            if (text === "") return; 
+            const parsed = parseFloat(text);
+            if (!isNaN(parsed)) {
+              setTotalBudget(parsed);
+            }
+          }}
           placeholder="e.g. 1000"
           placeholderTextColor={Colors.gray}
           keyboardType="numeric"
-          returnKeyType="done"
-          onSubmitEditing={() => {
-            setTotalBudget(parseFloat(budgetInput) || 0);
-            Keyboard.dismiss();
-          }}
+        
         />
 
         <Text style={styles.label}>Add Expense</Text>

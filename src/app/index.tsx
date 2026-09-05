@@ -10,6 +10,7 @@ export default function HomeScreen() {
   const trips = useTripStore((state) => state.trips);
   const activeTripId = useTripStore((state) => state.activeTripId);
   const setActiveTrip = useTripStore((state) => state.setActiveTrip);
+  const deleteTrip = useTripStore((state) => state.deleteTrip);
 
   useEffect(() => {
     loadTrips();
@@ -56,8 +57,13 @@ export default function HomeScreen() {
             style={[styles.tripRow, item.id === activeTripId && styles.tripRowActive]}
             onPress={() => setActiveTrip(item.id)}
           >
-            <Text style={styles.tripName}>{item.destination}</Text>
-            <Text style={styles.tripDates}>{item.startDate} — {item.endDate}</Text>
+            <View>
+              <Text style={styles.tripName}>{item.destination}</Text>
+              <Text style={styles.tripDates}>{item.startDate} — {item.endDate}</Text>
+            </View>
+            <Pressable onPress={() => deleteTrip(item.id)} hitSlop={10}>
+              <Text style={styles.deleteText}>✕</Text>
+            </Pressable>
           </Pressable>
         )}
         ListEmptyComponent={<Text style={styles.emptyText}>No trips yet. Create your first one above.</Text>}
@@ -68,22 +74,23 @@ export default function HomeScreen() {
 
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.paper, padding: Spacing.lg, paddingTop: 80 },
+  container: { flex: 1, backgroundColor: Colors.lightTeal, padding: Spacing.lg, paddingTop: 80 },
   eyebrow: { fontFamily: Fonts.bodyMedium, fontSize: 14, color: Colors.teal, letterSpacing: 1, textTransform: 'uppercase' },
   title: { fontFamily: Fonts.displayBold, fontSize: 40, color: Colors.navy, marginTop: Spacing.xs, marginBottom: Spacing.lg },
   newTripButton: { backgroundColor: Colors.saffron, borderRadius: Radius.md, padding: Spacing.md, marginBottom: Spacing.lg },
   newTripText: { fontFamily: Fonts.bodySemiBold, color: Colors.navy, textAlign: 'center', fontSize: 16 },
   menu: { gap: 0, marginBottom: Spacing.lg },
-  card: { backgroundColor: Colors.white, borderRadius: Radius.lg, padding: Spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: Colors.sand },
+  card: { backgroundColor: Colors.sand, borderRadius: Radius.lg, padding: Spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: Colors.sand },
   cardDisabled: { opacity: 0.5 },
   cardLabel: { fontFamily: Fonts.displayBold, fontSize: 20, color: Colors.navy },
   cardSub: { fontFamily: Fonts.body, fontSize: 14, color: Colors.gray, marginTop: 2 },
   arrow: { fontSize: 20, color: Colors.saffron },
   dottedLine: { height: 20, marginLeft: Spacing.lg + 4, borderLeftWidth: 2, borderLeftColor: Colors.sand, borderStyle: 'dashed' },
   sectionLabel: { fontFamily: Fonts.bodySemiBold, fontSize: 14, color: Colors.navy, marginBottom: Spacing.sm },
-  tripRow: { backgroundColor: Colors.white, borderRadius: Radius.md, padding: Spacing.md, marginBottom: Spacing.sm, borderWidth: 1, borderColor: Colors.sand },
+  tripRow: { backgroundColor: Colors.white, borderRadius: Radius.md, padding: Spacing.md, marginBottom: Spacing.sm, borderWidth: 1, borderColor: Colors.sand, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tripRowActive: { borderColor: Colors.teal, borderWidth: 2 },
   tripName: { fontFamily: Fonts.bodySemiBold, fontSize: 16, color: Colors.navy },
   tripDates: { fontFamily: Fonts.body, fontSize: 13, color: Colors.gray, marginTop: 2 },
   emptyText: { fontFamily: Fonts.body, color: Colors.gray, marginTop: Spacing.md },
+  deleteText: { color: '#C0392B', fontSize: 16, fontFamily: Fonts.bodySemiBold },
 });
